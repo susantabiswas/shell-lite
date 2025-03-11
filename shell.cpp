@@ -285,6 +285,7 @@ void repl_loop() {
     char* line;
     char** args;
 
+    cout << "Starting shell...." << endl;
     while(true) {
         print_prompt();
         line = read_line();
