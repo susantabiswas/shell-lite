@@ -1,3 +1,14 @@
+/**
+ * @file shell.cpp
+ * @brief A lightweight shell implementation that supports both built-in and external commands
+ * 
+ * This shell provides a command-line interface with the following features:
+ * - Basic REPL (Read-Evaluate-Print Loop) interface
+ * - Built-in commands: cd, help, exit
+ * - External command execution using fork/exec pattern
+ * - Command line parsing with argument tokenization
+ * - Child process management and wait status handling
+ */
 #include <iostream>
 #include <vector>
 #include <cstdio>
@@ -53,8 +64,8 @@ unordered_map<string, string> built_in_description = {
 /*
     Command execution
 */
-void free_args(char**& args) {
-    for(int i = 0; i < sizeof(args) / sizeof(char*); i++)
+void free_args(char**& args, int n_args) {
+    for(int i = 0; i < n_args; i++)
         free(args[i]);
     free(args);
 }
@@ -66,7 +77,6 @@ int launch_cmd(char** args) {
     // child process
     if (pid == 0) {
         if(execvp(args[0], args) == -1) {
-            free_args(args);
             perror("[shell] Error launching command.");
             return 0;
         }
@@ -74,7 +84,6 @@ int launch_cmd(char** args) {
     // error forking
     else if(pid < 0) {
         cerr << "Error forking process: " <<  getpid() << endl;
-        free_args(args);
         perror("[shell] Error forking child process.");
         return 0;
     }
@@ -96,7 +105,6 @@ int launch_cmd(char** args) {
         while(!WIFEXITED(status) && !WIFSIGNALED(status));
     }
     
-    free_args(args);
     return 1;
 }
 
@@ -253,6 +261,9 @@ void repl_loop() {
         // tokenize the command
         auto [args, n_args] = tokenize_line(line);
         execute_cmd(args, n_args);
+
+        free(line);
+        free_args(args, n_args);
     }
 }
 
