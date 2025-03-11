@@ -64,12 +64,12 @@ unordered_map<string, string> built_in_description = {
 /*
     Command execution
 */
-void free_args(char**& args, int n_args) {
-    for(int i = 0; i < n_args; i++)
-        free(args[i]);
-    free(args);
-}
 
+/**
+ * @brief Launches an external command in a child process
+ * @param args NULL-terminated array of command arguments
+ * @return 1 on success, 0 on failure
+ */
 int launch_cmd(char** args) {
     // launch the command in a child process
     pid_t pid = fork();
@@ -108,6 +108,12 @@ int launch_cmd(char** args) {
     return 1;
 }
 
+/**
+ * @brief Executes a command based on whether built-in or external command.
+ * @param args Array of command arguments (NULL-terminated)
+ * @param n_args Number of arguments
+ * @return 1 on success, 0 on failure
+ */
 int execute_cmd(char** args, size_t n_args) {
     if (n_args == 0) {
         cout << "Empty command entered, please enter your input..." << endl;
@@ -125,6 +131,8 @@ int execute_cmd(char** args, size_t n_args) {
 
 /*
     Built-in commands
+    @brief These are native commands of the shell program. These
+    are mostly used for shell related operations.
 */
 /*
  * @brief Change the current working directory
@@ -150,6 +158,11 @@ int cmd_cd(char** args) {
     return 1;
 }
 
+/**
+ * @brief Built-in command to display help information
+ * @param args Command arguments (unused)
+ * @return Always returns 1
+ */
 int cmd_help(char** args) {
     cout << "Shell help" << endl;
     cout << "Following built-in commands are supported" << endl;
@@ -161,6 +174,11 @@ int cmd_help(char** args) {
     return 1;
 }
 
+/**
+ * @brief Built-in command to exit the shell
+ * @param args Command arguments (unused)
+ * @return Never returns; calls exit()
+ */
 int cmd_exit(char** args) {
     cout << "Exiting shell" << endl;
     exit(EXIT_SUCCESS);
@@ -175,6 +193,10 @@ void print_prompt() {
     cout << PROMPT;
 }
 
+/**
+ * @brief Reads a line of input from standard input
+ * @return Dynamically allocated string containing user input
+ */
 char* read_line() {
     char* line = nullptr;
     // when buff_size is 0, getline will allocate the buffer memory
@@ -195,6 +217,11 @@ char* read_line() {
     return line;
 }
 
+/**
+ * @brief Parses a command line into tokens
+ * @param line Input string to tokenize
+ * @return Pair of {token array, token count}
+ */
 pair<char**, size_t> tokenize_line(char* line) {
     if (!line)
         return { nullptr, 0 };
@@ -244,6 +271,16 @@ pair<char**, size_t> tokenize_line(char* line) {
     return { tokens, pos };
 }
 
+/**
+ * @brief Main shell loop that reads and executes commands
+ * 
+ * This function implements the shell's read-evaluate-print loop:
+ * 1. Display prompt
+ * 2. Read user input
+ * 3. Parse input into tokens
+ * 4. Execute command
+ * 5. Repeat
+ */
 void repl_loop() {
     char* line;
     char** args;
@@ -257,13 +294,19 @@ void repl_loop() {
             continue;
         }
 
-        cout << "Input: "<< line<<endl;
         // tokenize the command
         auto [args, n_args] = tokenize_line(line);
         execute_cmd(args, n_args);
 
+        // strtok when used for tokenization returns the ptr to 
+        // positions in the original string line. So, args is just
+        // a block of memory where each block is just pointing to
+        // addresses in the original line.
+        // Once free(line) happens, the string related memory is freed, 
+        // so args can also be freed using free(args) instead of freeing
+        // individual elements of args.
         free(line);
-        free_args(args, n_args);
+        free(args);
     }
 }
 
