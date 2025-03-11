@@ -1,1 +1,119 @@
-Lightweight shell to understand the underlying mechanics of it.
+# Shell Lite
+
+Lightweight shell implementation to understand the underlying mechanics of Unix/Linux shells.
+
+## Overview
+
+Shell Lite is a minimal shell implementation written in C++ that demonstrates core shell functionalities. This project was created to understand the fundamental operations of command-line interfaces, including:
+
+- Command parsing and execution
+- Process creation and management
+- Built-in command implementation
+- Basic input/output handling
+- Memory management for command arguments
+
+The shell supports both built-in commands (cd, help, exit) and external commands through the standard PATH lookup.
+
+## Project Setup
+
+>Note: This shell uses `fork()` system call and hence will not work on a Windows machine. You can use WSL in Windows to run this.
+### Prerequisites
+- `C++ compiler` (GCC or Clang recommended)
+- `Make` (optional, for build automation)
+- Unix-like environment (Linux, macOS, WSL on Windows)
+
+### Building the Project
+
+Clone the repository and build the shell:
+
+```bash
+git clone https://github.com/yourusername/shell-lite.git
+cd shell-lite
+g++ -o shell shell.cpp -std=c++17
+```
+
+#### Using Make (recommended)
+
+A Makefile is included for easier building:
+
+```bash
+# Build the shell
+make
+
+# Clean build artifacts
+make clean
+
+# Rebuild the project
+make rebuild
+```
+
+The Makefile handles compilation flags and dependencies automatically, making it the recommended build method.
+
+## Basic Usage
+
+### Running the Shell
+
+To start the shell:
+
+```bash
+./shell
+```
+
+You'll be presented with a simple prompt: `> `
+
+### Built-in Commands
+
+Shell Lite supports the following built-in commands:
+
+| Command | Description | Usage |
+|---------|-------------|-------|
+| `cd` | Change the current directory | `cd <directory>` |
+| `help` | Display available commands | `help` |
+| `exit` | Exit the shell | `exit` |
+
+### External Commands
+
+Any command not recognized as a built-in will be treated as an external command and executed using the PATH lookup mechanism. For example:
+
+```
+> ls -l
+> echo "Hello World"
+> cat README.md
+```
+
+### Command Line Features
+
+- Simple command tokenization
+- External program execution
+- Error handling for non-existent commands
+- Child process management
+
+## Implementation Details
+
+The shell follows a simple REPL (Read-Evaluate-Print Loop) pattern:
+
+1. **Read**: Reads user input from the command line
+2. **Tokenize**: Splits the input into command and arguments
+3. **Execute**: 
+   - Checks if the command is a built-in
+   - If not, forks a new process and executes the external command
+4. **Wait**: Waits for the command to complete
+5. **Loop**: Returns to step 1
+
+Key components:
+- `repl_loop()`: Main shell loop
+- `tokenize_line()`: Parses input into tokens
+- `execute_cmd()`: Determines if command is built-in or external
+- `launch_cmd()`: Creates child process for external commands
+
+## Limitations
+
+This is a learning project with several limitations:
+- No advanced features like pipes, redirections, or job control
+- Limited error handling
+- No command history or line editing
+- No environment variable expansion
+- No wildcards or filename completion
+
+## Acknowledgements
+- https://brennan.io/2015/01/16/write-a-shell-in-c/
