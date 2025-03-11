@@ -4,15 +4,46 @@ Lightweight shell implementation to understand the underlying mechanics of Unix/
 
 ## Overview
 
-Shell Lite is a minimal shell implementation written in C++ that demonstrates core shell functionalities. This project was created to understand the fundamental operations of command-line interfaces, including:
-
-- Command parsing and execution
-- Process creation and management
-- Built-in command implementation
-- Basic input/output handling
-- Memory management for command arguments
+Shell Lite is a minimal shell implementation written in C++ that demonstrates core shell functionalities. This project was created to understand the fundamental operations of command-line interfaces.
 
 The shell supports both built-in commands (cd, help, exit) and external commands through the standard PATH lookup.
+
+## Output
+```
+              ════════════════════════════════════
+                      Shell lite started....
+               ════════════════════════════════════
+
+    ███████╗██╗  ██╗███████╗██╗     ██╗         ██╗     ██╗████████╗███████╗
+    ██╔════╝██║  ██║██╔════╝██║     ██║         ██║     ██║╚══██╔══╝██╔════╝
+    ███████╗███████║█████╗  ██║     ██║         ██║     ██║   ██║   █████╗
+    ╚════██║██╔══██║██╔══╝  ██║     ██║         ██║     ██║   ██║   ██╔══╝
+    ███████║██║  ██║███████╗███████╗███████╗    ███████╗██║   ██║   ███████╗
+    ╚══════╝╚═╝  ╚═╝╚══════╝╚══════╝╚══════╝    ╚══════╝╚═╝   ╚═╝   ╚══════╝
+
+    Type 'help' for available commands
+
+> pwd
+/mnt/c/Users/dev/Desktop/Dev/github/shell-lite
+
+> ls -la
+total 168
+drwxrwxrwx 1 seeker seeker   4096 Mar 11 21:11 .
+drwxrwxrwx 1 seeker seeker   4096 Mar  8 17:42 ..
+drwxrwxrwx 1 seeker seeker   4096 Mar 11 21:09 .git
+drwxrwxrwx 1 seeker seeker   4096 Mar 10 22:53 .vscode
+-rwxrwxrwx 1 seeker seeker   1092 Mar  8 17:55 LICENSE
+-rwxrwxrwx 1 seeker seeker   3305 Mar 11 21:08 README.md
+-rwxrwxrwx 1 seeker seeker    517 Mar 11 20:20 makefile
+-rwxrwxrwx 1 seeker seeker 149200 Mar 11 21:11 shell
+-rwxrwxrwx 1 seeker seeker   8871 Mar 11 20:21 shell.cpp
+
+> cd ..
+
+> pwd
+/mnt/c/Users/dev/Desktop/Dev/github
+>
+```
 
 ## Project Setup
 
