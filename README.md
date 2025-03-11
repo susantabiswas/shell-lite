@@ -112,13 +112,6 @@ Any command not recognized as a built-in will be treated as an external command 
 > cat README.md
 ```
 
-### Command Line Features
-
-- Simple command tokenization
-- External program execution
-- Error handling for non-existent commands
-- Child process management
-
 ## Implementation Details
 
 The shell follows a simple REPL (Read-Evaluate-Print Loop) pattern:
@@ -127,24 +120,9 @@ The shell follows a simple REPL (Read-Evaluate-Print Loop) pattern:
 2. **Tokenize**: Splits the input into command and arguments
 3. **Execute**: 
    - Checks if the command is a built-in
-   - If not, forks a new process and executes the external command
+   - If not, forks a new process and executes the external command by replacing the process space of child process with external program.
 4. **Wait**: Waits for the command to complete
 5. **Loop**: Returns to step 1
-
-Key components:
-- `repl_loop()`: Main shell loop
-- `tokenize_line()`: Parses input into tokens
-- `execute_cmd()`: Determines if command is built-in or external
-- `launch_cmd()`: Creates child process for external commands
-
-## Limitations
-
-This is a learning project with several limitations:
-- No advanced features like pipes, redirections, or job control
-- Limited error handling
-- No command history or line editing
-- No environment variable expansion
-- No wildcards or filename completion
 
 ## Acknowledgements
 - https://brennan.io/2015/01/16/write-a-shell-in-c/
