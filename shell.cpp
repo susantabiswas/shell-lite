@@ -13,33 +13,39 @@ using namespace std;
 
 ////////////////////////// Prototypes //////////////////////////
 // External commands
-int execute_cmd(vector<string>& args);
-int launch_cmd(vector<string>& args);
+int execute_cmd(char** args, size_t n_args);
+int launch_cmd(char** args);
 
 // Built-ins
-int cmd_cd(vector<string>& args);
-int cmd_help(vector<string>& args);
-int cmd_exit(vector<string>& args);
+int cmd_cd(char** args);
+int cmd_help(char** args);
+int cmd_exit(char** args);
 
 // shell operations
 void print_prompt();
-vector<string> parse_args(string& args);
-string read_line();
+pair<char**, size_t> tokenize_line(char* args);
+char* read_line();
 void repl_loop();
 
 /*
     Constants
 */
 const string PROMPT = "> ";
-const int BUFFER_LEN = 1024;
 
-using func = function<int(vector<string>&)>;
+// built-in function template
+using func = function<int(char**)>;
 
 // mapping of built-in commands to their respective functions
 unordered_map<string, func> built_in_cmds = {
     {"cd", cmd_cd},
     {"help", cmd_help},
     {"exit", cmd_exit}
+};
+
+unordered_map<string, string> built_in_description = {
+    {"cd", "Change the current working directory"},
+    {"help", "Help menu for the shell"},
+    {"exit", "Exit the shell"}
 };
 
 ////////////////////////// Implementations //////////////////////////
@@ -53,29 +59,23 @@ void free_args(char**& args) {
     free(args);
 }
 
-int launch_cmd(vector<string>& args) {
+int launch_cmd(char** args) {
     // launch the command in a child process
     pid_t pid = fork();
-    char** c_args = (char**)malloc(sizeof(char*) * args.size() + 1);
-
-    int i = 0;
-    for(auto arg: args) {
-        c_args[i++] = strdup(arg.c_str());
-    }
-
+    
     // child process
     if (pid == 0) {
-        if(execvp(args[0].c_str(), c_args) == -1) {
-            free_args(c_args);
-            perror("[shell]");
+        if(execvp(args[0], args) == -1) {
+            free_args(args);
+            perror("[shell] Error launching command.");
             return 0;
         }
     }
     // error forking
     else if(pid < 0) {
         cerr << "Error forking process: " <<  getpid() << endl;
-        free_args(c_args);
-        perror("[shell]");
+        free_args(args);
+        perror("[shell] Error forking child process.");
         return 0;
     }
     // parent process
@@ -96,18 +96,18 @@ int launch_cmd(vector<string>& args) {
         while(!WIFEXITED(status) && !WIFSIGNALED(status));
     }
     
-    free_args(c_args);
+    free_args(args);
     return 1;
 }
 
-int execute_cmd(vector<string>& args) {
-    if (args.empty()) {
+int execute_cmd(char** args, size_t n_args) {
+    if (n_args == 0) {
         cout << "Empty command entered, please enter your input..." << endl;
         return 1;
     }
 
     // check if it is one of the built-in commands
-    if(built_in_cmds.count(args[0])) {
+    if(built_in_cmds.count(string(args[0]))) {
         return built_in_cmds[args[0]](args);
     }
 
@@ -138,48 +138,92 @@ void print_prompt() {
     cout << PROMPT;
 }
 
-string read_line() {
-    string line;
+char* read_line() {
+    char* line = nullptr;
+    // when buff_size is 0, getline will allocate the buffer memory
+    // suitable for holding the input.
+    size_t buff_size = 0;
 
-    getline(cin, line);
+    int chars_read = getline(&line, &buff_size, stdin);
 
-    if (cin.fail()) {
-        cerr << "Error reading input" << endl;
+    if (chars_read == -1) {
+        if(feof(stdin)) {
+            cerr << "EOF reached, exiting" << endl;
+            exit(EXIT_SUCCESS);
+        }
+
+        perror("[shell] Error reading input.");
         exit(EXIT_FAILURE);
     }
-
-    // Ctr + D at the end of some input
-    if (cin.eof()) {
-        cout << "EOF reached" << endl;
-        exit(EXIT_SUCCESS);
-    }
-
     return line;
 }
 
-vector<string> parse_args(string& line) {
-    vector<string> args;
-    string token;
+pair<char**, size_t> tokenize_line(char* line) {
+    if (!line)
+        return { nullptr, 0 };
+        
+    int tokens_list_len = 32;
+    const char* DELIM = " \t\r\n\a";
 
-    istringstream ss(line);
-    char delimiter = ' ';
+    char* token = nullptr;
+    char** tokens = (char**) malloc(sizeof(char*) * tokens_list_len);
     
-    while(getline(ss, token, delimiter)) {
-        args.push_back(token);
+    if (!tokens) {
+        cerr << "Error allocating memory for tokens" << endl;
+        exit(EXIT_FAILURE);
     }
-    return args;
+    
+    token = strtok(line, DELIM);
+    int pos = 0;
+
+    while(token) {
+        tokens[pos++] = token;
+        token = strtok(NULL, DELIM);
+
+        // check if the tokens list is full
+        // if reserve the last element for the NULL terminator,
+        // execvp needs the last element to be NULL
+        if (pos >= tokens_list_len - 1) {
+            tokens_list_len *= 2;
+            
+            char** new_tokens = (char**)realloc(tokens, tokens_list_len * sizeof(char*));
+
+            if (!new_tokens) {
+                perror("[shell] Error allocating memory for tokens.");
+                // Since the resizing attempt failed, free the memory of existing
+                // tokens list
+                free(tokens);
+                exit(EXIT_FAILURE);
+            }
+
+            // realloc attempt was successful
+            tokens = new_tokens;
+        }
+    }
+
+    // excevp requires the last element to be NULL.
+    tokens[pos] = nullptr;
+    
+    return { tokens, pos };
 }
 
 void repl_loop() {
-    string line;
-    vector<string> args;
+    char* line;
+    char** args;
 
     while(true) {
         print_prompt();
         line = read_line();
+
+        if (sizeof(line) == 0) {
+            cout << "Empty input received, please enter a command" << endl;
+            continue;
+        }
+
+        cout << "Input: "<< line<<endl;
         // tokenize the command
-        args = parse_args(line);
-        execute_cmd(args);
+        auto [args, n_args] = tokenize_line(line);
+        execute_cmd(args, n_args);
     }
 }
 
