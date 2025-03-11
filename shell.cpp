@@ -118,15 +118,44 @@ int execute_cmd(char** args, size_t n_args) {
 /*
     Built-in commands
 */
-int cmd_cd(vector<string>& args) {
+/*
+ * @brief Change the current working directory
+ * @param args: The path to change the directory to
+ * @remark The reason 'cd' is a built-in instead of using an
+ * external command is because the commands are launched as child process,
+ * so an external cd command will only change the dir for the child process
+ * instead of the parent process.
+ */
+int cmd_cd(char** args) {
+    // nullptr is the last element of args, if there
+    // is no path provided, return an error
+    if (args[1] == nullptr) {
+        cerr << "No path provided. Usage: cd <path>" << endl;
+        return 0;
+    }
+
+    if (chdir(args[1]) != 0) {
+        perror("[shell] Error changing directory.");
+        return 0;
+    }
+
     return 1;
 }
 
-int cmd_help(vector<string>& args) {
+int cmd_help(char** args) {
+    cout << "Shell help" << endl;
+    cout << "Following built-in commands are supported" << endl;
+
+    for(auto cmd: built_in_cmds) {
+        cout << cmd.first << ": " << built_in_description[cmd.first] << endl;
+    }
+
     return 1;
 }
 
-int cmd_exit(vector<string>& args) {
+int cmd_exit(char** args) {
+    cout << "Exiting shell" << endl;
+    exit(EXIT_SUCCESS);
     return 1;
 }
 
